@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Happy Birthday, Angel!</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            overflow: hidden; /* Prevent scrolling on the whole page */
+        }
+        .bg-gradient-custom {
+            background: linear-gradient(135deg, #fde68a, #fca5a5, #a78bfa);
+        }
+
+        /* --- Slide Container & Transitions --- */
+        .slides-container {
+            position: relative;
+            width: 100%;
+            max-width: 28rem; /* max-w-lg */
+            height: 85vh; /* Adjust as needed */
+            min-height: 600px;
+        }
+        .slide {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: opacity 0.5s ease-in-out, transform 0.5s ease-in-out;
+            padding: 1rem;
+        }
+        .slide.hidden {
+            opacity: 0;
+            pointer-events: none;
+            transform: scale(0.95);
+        }
+        
+        .birthday-cake-svg {
+            width: 150px;
+            height: auto;
+            filter: drop-shadow(0 10px 8px rgba(0,0,0,0.1));
+            animation: float 6s ease-in-out infinite;
+        }
+        @keyframes float {
+            0% { transform: translateY(0px) rotate(-3deg); }
+            50% { transform: translateY(-20px) rotate(3deg); }
+            100% { transform: translateY(0px) rotate(-3deg); }
+        }
+        .card {
+            background-color: rgba(255, 255, 255, 0.85);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transform: perspective(1000px);
+            transition: transform 0.1s ease-out;
+            width: 100%;
+        }
+        .shimmer-text {
+            background-size: 200% auto;
+            animation: shimmer 3s linear infinite;
+        }
+        @keyframes shimmer {
+            to {
+                background-position: 200% center;
+            }
+        }
+        .gift-box {
+            cursor: pointer;
+            transition: transform 0.3s ease;
+            animation: bounce 2s ease-in-out infinite 1s;
+        }
+        @keyframes bounce {
+            0%, 20%, 50%, 80%, 100% {transform: translateY(0);}
+            40% {transform: translateY(-15px);}
+            60% {transform: translateY(-8px);}
+        }
+        .gift-box:hover {
+            transform: scale(1.1);
+            animation-play-state: paused;
+        }
+        .gift-box .lid {
+            transition: transform 0.5s ease-in-out;
+        }
+        .gift-box.open .lid {
+            transform: translateY(-80px) rotate(20deg);
+        }
+        .surprise-message {
+            transition: opacity 0.5s 0.3s ease, transform 0.5s 0.3s ease;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+        .gift-box.open + .surprise-message {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .confetti-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            overflow: hidden;
+            z-index: 0;
+        }
+        .confetti {
+            position: absolute;
+            width: 10px;
+            height: 10px;
+            opacity: 0.9;
+            animation: fall 5s linear forwards;
+        }
+        @keyframes fall {
+            to {
+                transform: translateY(105vh) rotate(720deg);
+                opacity: 0;
+            }
+        }
+        .particle {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: fade-out 1s forwards;
+            z-index: 9999;
+        }
+        @keyframes fade-out {
+            to {
+                opacity: 0;
+                transform: scale(0.5);
+            }
+        }
+        #candle-flame {
+            cursor: pointer;
+            transition: opacity 0.3s ease;
+        }
+        #candle-flame:hover {
+            opacity: 0.8;
+        }
+        .nav-btn {
+            transition: all 0.3s ease;
+        }
+        .nav-btn:hover {
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+        }
+        .photo-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+        }
+        .photo-item {
+            position: relative; /* For quote positioning */
+            background-color: #fff;
+            border-radius: 0.75rem;
+            overflow: hidden;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: transform 0.3s ease;
+            cursor: pointer;
+        }
+        .photo-item:hover {
+            transform: scale(1.05) rotate(3deg);
+        }
+        .photo-quote {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.65);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 1rem;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.4s ease;
+            border-radius: 0.75rem; /* Match parent */
+            font-style: italic;
+        }
+        .photo-item.show-quote .photo-quote {
+            opacity: 1;
+            pointer-events: auto;
+        }
+        /* --- Game Styles --- */
+        #gameCanvas {
+            background-color: rgba(0, 0, 0, 0.1);
+            border-radius: 1rem;
+            cursor: none;
+        }
+    </style>
+</head>
+<body class="bg-gradient-custom min-h-screen flex flex-col items-center justify-center p-4 relative">
+
+    <div class="confetti-container" id="confetti-container"></div>
+    
+    <!-- Audio Player -->
+    <audio id="birthdaySong" loop src="Learn Chinese Songs _ Happy Birthday Song 生日快乐 Chinese_Pinyin_English lyrics Easiest Must know song [n4iWaZrRAl8].mp3"></audio>
+
+    <div class="slides-container">
+        <!-- Slide 1: Welcome -->
+        <div class="slide" id="slide-1">
+            <div class="text-center">
+                <svg class="birthday-cake-svg mx-auto" viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+                    <rect x="48" y="20" width="4" height="15" fill="#FBBF24"/>
+                    <g id="candle-flame" onclick="blowOutCandle(this)">
+                        <path d="M 50 15 Q 52 18 50 20" fill="orange"/><path d="M 50 15 C 48 12, 52 12, 50 15" fill="yellow"/>
+                    </g>
+                    <path d="M 20 50 C 30 40, 70 40, 80 50 L 80 55 C 70 45, 30 45, 20 55 Z" fill="#F472B6"/>
+                    <rect x="20" y="50" width="60" height="20" rx="5" fill="#FBCFE8"/>
+                    <rect x="15" y="70" width="70" height="20" rx="5" fill="#F9A8D4"/>
+                    <ellipse cx="50" cy="92" rx="45" ry="5" fill="#E5E7EB"/>
+                </svg>
+                <h1 class="text-4xl font-bold text-white mt-8" style="text-shadow: 2px 2px 4px rgba(0,0,0,0.2);">Someone's birthday is today!</h1>
+                <p class="text-white/80 mt-4 text-lg animate-pulse">🔊 Volume up for the best experience!</p>
+                <button id="startBtn" class="nav-btn mt-8 bg-white text-purple-500 font-bold py-3 px-8 rounded-full shadow-lg">Click to Start</button>
+            </div>
+        </div>
+
+        <!-- Slide 2: Birthday Card -->
+        <div class="slide hidden" id="slide-2">
+            <div class="card rounded-2xl shadow-2xl p-6 md:p-10" id="card">
+                <h1 class="text-3xl md:text-4xl font-bold text-gray-800 mb-2">Happy Birthday!</h1>
+                <h2 class="shimmer-text text-4xl md:text-5xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-purple-500 via-pink-500 to-purple-500 mb-6">Angel Augustine Prasetya</h2>
+                <p class="text-gray-600 text-lg mb-8">Wishing you a fantastic day filled with joy, laughter, and everything you wished for!</p>
+                <div id="giftBox" class="gift-box w-24 mx-auto">
+                    <div class="lid relative z-10 w-full h-6 bg-rose-500 rounded-t-md"><div class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-12 h-6 bg-rose-400 rounded-t-full"></div></div>
+                    <div class="box w-full h-20 bg-rose-400 rounded-b-md flex items-center justify-center"><div class="w-2 h-full bg-rose-500"></div></div>
+                </div>
+                <div id="surpriseMessage" class="surprise-message mt-6 p-4 bg-purple-100 border-2 border-dashed border-purple-300 rounded-lg">
+                    <p class="text-purple-700 font-semibold text-xl" id="surpriseText"></p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 3: Photo Gallery -->
+        <div class="slide hidden" id="slide-3">
+            <div class="card rounded-2xl shadow-2xl p-6 md:p-8 overflow-y-auto h-full">
+                <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">Happy Memories!</h2>
+                <div class="photo-grid">
+                    <div class="photo-item">
+                        <img src="1.jpg" alt="Memory 1" onerror="this.onerror=null;this.src='https://placehold.co/200x200/fca5a5/ffffff?text=Memory+1';">
+                        <div class="photo-quote"><p>"A moment of joy, captured forever."</p></div>
+                    </div>
+                    <div class="photo-item">
+                        <img src="2.jpg" alt="Memory 2" onerror="this.onerror=null;this.src='https://placehold.co/200x200/a78bfa/ffffff?text=Memory+2';">
+                        <div class="photo-quote"><p>"Good times and great company."</p></div>
+                    </div>
+                    <div class="photo-item">
+                        <img src="3.jpg" alt="Memory 3" onerror="this.onerror=null;this.src='https://placehold.co/200x200/fde68a/ffffff?text=Memory+3';">
+                        <div class="photo-quote"><p>"Making memories all over the world."</p></div>
+                    </div>
+                    <div class="photo-item">
+                        <img src="4.jpg" alt="Memory 4" onerror="this.onerror=null;this.src='https://placehold.co/200x200/86efac/ffffff?text=Memory+4';">
+                        <div class="photo-quote"><p>"Laughter is timeless, imagination has no age."</p></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Slide 4: Star Catcher Game -->
+        <div class="slide hidden" id="slide-4">
+            <div class="card rounded-2xl shadow-2xl p-4 text-center w-full h-full flex flex-col">
+                 <h2 class="text-2xl font-bold text-gray-800">Star Catcher!</h2>
+                 <p class="text-gray-600 mb-2">Catch the falling stars!</p>
+                 <div class="flex-grow relative">
+                     <canvas id="gameCanvas" class="absolute top-0 left-0"></canvas>
+                 </div>
+            </div>
+        </div>
+        
+        <!-- Slide 5: Final Message -->
+        <div class="slide hidden" id="slide-5">
+             <div class="card rounded-2xl shadow-2xl p-6 md:p-10 text-center">
+                <h1 class="text-4xl font-bold text-purple-600 mb-4">Happy Birthday!</h1>
+                <p class="text-gray-700 text-xl mb-6">May your year be filled with amazing adventures and endless happiness. God Bless Youu!</p>
+                <button id="replayBtn" class="nav-btn mt-4 bg-purple-500 text-white font-bold py-3 px-8 rounded-full shadow-lg">Replay</button>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Navigation & Music Buttons -->
+    <div class="absolute bottom-4 flex space-x-4 z-10">
+        <button id="musicBtn" class="nav-btn bg-white/80 text-gray-700 font-bold py-2 px-6 rounded-full shadow-lg hidden">▶ Play Music</button>
+        <button id="prevBtn" class="nav-btn bg-white text-gray-700 font-bold py-2 px-6 rounded-full shadow-lg hidden">Previous</button>
+        <button id="nextBtn" class="nav-btn bg-white text-gray-700 font-bold py-2 px-6 rounded-full shadow-lg hidden">Next</button>
+    </div>
+
+
+    <script>
+        // --- Element References ---
+        const slides = document.querySelectorAll('.slide');
+        const startBtn = document.getElementById('startBtn');
+        const prevBtn = document.getElementById('prevBtn');
+        const nextBtn = document.getElementById('nextBtn');
+        const replayBtn = document.getElementById('replayBtn');
+        const giftBox = document.getElementById('giftBox');
+        const confettiContainer = document.getElementById('confetti-container');
+        const card = document.getElementById('card');
+        const surpriseTextEl = document.getElementById('surpriseText');
+        const birthdaySong = document.getElementById('birthdaySong');
+        const musicBtn = document.getElementById('musicBtn');
+        const photoItems = document.querySelectorAll('.photo-item');
+        const confettiColors = ['#fde68a', '#fca5a5', '#a78bfa', '#86efac', '#fbbbf2'];
+        
+        let currentSlide = 0;
+
+        // --- Music Controls ---
+        function toggleMusic() {
+            if (birthdaySong.paused) {
+                birthdaySong.play().catch(error => console.log("Audio playback failed: " + error));
+                musicBtn.textContent = '❚❚ Pause Music';
+            } else {
+                birthdaySong.pause();
+                musicBtn.textContent = '▶ Play Music';
+            }
+        }
+        musicBtn.addEventListener('click', toggleMusic);
+
+        // --- Slide Navigation ---
+        function showSlide(index) {
+            slides.forEach((slide, i) => {
+                slide.classList.toggle('hidden', i !== index);
+            });
+            currentSlide = index;
+            updateNavButtons();
+            
+            // Start or stop the game based on the slide
+            if (index === 3) { // Game slide index
+                startGame();
+            } else {
+                stopGame();
+            }
+        }
+
+        function updateNavButtons() {
+            // Show/hide the main start button
+            startBtn.classList.toggle('hidden', currentSlide !== 0);
+            
+            // Show/hide the music, previous, and next buttons
+            const isFirstSlide = currentSlide === 0;
+            musicBtn.classList.toggle('hidden', isFirstSlide);
+            prevBtn.classList.toggle('hidden', isFirstSlide);
+            nextBtn.classList.toggle('hidden', isFirstSlide || currentSlide === slides.length - 1);
+        }
+
+        startBtn.addEventListener('click', () => {
+             showSlide(1);
+             // Automatically play music on start if it's paused
+             if (birthdaySong.paused) {
+                 toggleMusic();
+             }
+        });
+        nextBtn.addEventListener('click', () => {
+            if (currentSlide < slides.length - 1) showSlide(currentSlide + 1);
+        });
+        prevBtn.addEventListener('click', () => {
+            if (currentSlide > 0) showSlide(currentSlide - 1);
+        });
+        replayBtn.addEventListener('click', () => showSlide(0));
+
+        // --- Interactive Candle ---
+        function blowOutCandle(flame) {
+            flame.style.transition = 'opacity 0.5s, transform 0.5s';
+            flame.style.opacity = '0';
+            flame.style.transform = 'translateY(-10px) scale(0.5)';
+        }
+
+        // --- Card Tilt Effect ---
+        if(card) {
+            card.addEventListener('mousemove', (e) => {
+                const { left, top, width, height } = card.getBoundingClientRect();
+                const x = e.clientX - left - width / 2;
+                const y = e.clientY - top - height / 2;
+                const rotateX = (y / height) * -20;
+                const rotateY = (x / width) * 20;
+                card.style.transform = `perspective(1000px) rotateX(${rotateX}deg) rotateY(${rotateY}deg)`;
+            });
+            card.addEventListener('mouseleave', () => {
+                card.style.transform = 'perspective(1000px) rotateX(0) rotateY(0)';
+            });
+        }
+
+        // --- Gift Box & Confetti ---
+        const surpriseMessageText = "You're awesome! Keep shining brightly. ✨";
+        let isTyping = false;
+        
+        giftBox.addEventListener('click', () => {
+            if (giftBox.classList.contains('open')) return; // Prevent re-triggering
+            
+            giftBox.classList.add('open');
+            createConfetti(100);
+            if (!isTyping) {
+                typeSurpriseMessage();
+            }
+        });
+        
+        function typeSurpriseMessage() {
+            isTyping = true;
+            let i = 0;
+            surpriseTextEl.innerHTML = '';
+            const typingInterval = setInterval(() => {
+                if (i < surpriseMessageText.length) {
+                    surpriseTextEl.innerHTML += surpriseMessageText.charAt(i);
+                    i++;
+                } else {
+                    clearInterval(typingInterval);
+                    isTyping = false;
+                }
+            }, 50);
+        }
+
+        function createConfetti(count) {
+            for (let i = 0; i < count; i++) {
+                const confetti = document.createElement('div');
+                confetti.classList.add('confetti');
+                confetti.style.left = Math.random() * 100 + 'vw';
+                confetti.style.top = Math.random() * -20 + 'vh';
+                confetti.style.backgroundColor = confettiColors[Math.floor(Math.random() * confettiColors.length)];
+                confetti.style.animationDelay = Math.random() * 0.5 + 's';
+                const size = Math.random() * 12 + 6 + 'px';
+                confetti.style.width = size;
+                confetti.style.height = size;
+                confetti.style.clipPath = Math.random() > 0.5 ? 'polygon(50% 0%, 0% 100%, 100% 100%)' : 'circle(50% at 50% 50%)';
+                confettiContainer.appendChild(confetti);
+
+                setTimeout(() => {
+                    confetti.remove();
+                }, 5000);
+            }
+        }
+
+        // --- Mouse Follower Particles ---
+        document.addEventListener('mousemove', (e) => createParticle(e.clientX, e.clientY));
+        document.addEventListener('touchmove', (e) => createParticle(e.touches[0].clientX, e.touches[0].clientY));
+
+        function createParticle(x, y) {
+            const particle = document.createElement('div');
+            particle.classList.add('particle');
+            document.body.appendChild(particle);
+
+            const size = Math.floor(Math.random() * 15 + 5);
+            particle.style.width = `${size}px`;
+            particle.style.height = `${size}px`;
+            
+            const color = confettiColors[Math.floor(Math.random() * confettiColors.length)];
+            particle.style.background = `radial-gradient(circle, ${color}ff, ${color}00)`;
+            
+            particle.style.left = `${x - size / 2}px`;
+            particle.style.top = `${y - size / 2}px`;
+
+            setTimeout(() => {
+                particle.remove();
+            }, 1000);
+        }
+
+        // --- Photo Gallery Quotes ---
+        photoItems.forEach(item => {
+            item.addEventListener('click', () => {
+                // This logic ensures only one quote is open at a time.
+                // It closes any other open quotes before toggling the current one.
+                photoItems.forEach(otherItem => {
+                    if (otherItem !== item) {
+                        otherItem.classList.remove('show-quote');
+                    }
+                });
+                item.classList.toggle('show-quote');
+            });
+        });
+
+        // --- Star Catcher Game Logic ---
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        let gameAnimationId;
+        let score;
+        let stars;
+        let player;
+        
+        function resizeCanvas() {
+            const container = canvas.parentElement;
+            canvas.width = container.clientWidth;
+            canvas.height = container.clientHeight;
+        }
+
+        function initGame() {
+            resizeCanvas();
+            score = 0;
+            player = {
+                x: canvas.width / 2 - 25,
+                width: 50,
+                height: 30,
+                draw() {
+                    ctx.beginPath();
+                    ctx.moveTo(this.x, canvas.height);
+                    ctx.lineTo(this.x + this.width / 2, canvas.height - this.height);
+                    ctx.lineTo(this.x + this.width, canvas.height);
+                    ctx.closePath();
+                    ctx.fillStyle = '#fde68a';
+                    ctx.fill();
+                    ctx.strokeStyle = '#facc15';
+                    ctx.lineWidth = 2;
+                    ctx.stroke();
+                }
+            };
+            stars = [];
+            for(let i=0; i<5; i++) {
+                spawnStar();
+            }
+        }
+
+        function spawnStar() {
+            const size = Math.random() * 10 + 5;
+            stars.push({
+                x: Math.random() * canvas.width,
+                y: -size,
+                size: size,
+                speed: Math.random() * 2 + 1
+            });
+        }
+
+        function drawStar(star) {
+            ctx.fillStyle = 'white';
+            ctx.shadowColor = 'yellow';
+            ctx.shadowBlur = 10;
+            ctx.beginPath();
+            ctx.moveTo(star.x, star.y - star.size);
+            for (let i = 0; i < 5; i++) {
+                ctx.lineTo(
+                    star.x + Math.cos((18 + i * 72) * Math.PI / 180) * star.size,
+                    star.y - Math.sin((18 + i * 72) * Math.PI / 180) * star.size
+                );
+                ctx.lineTo(
+                    star.x + Math.cos((54 + i * 72) * Math.PI / 180) * (star.size / 2),
+                    star.y - Math.sin((54 + i * 72) * Math.PI / 180) * (star.size / 2)
+                );
+            }
+            ctx.closePath();
+            ctx.fill();
+            ctx.shadowBlur = 0;
+        }
+
+        function gameLoop() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            
+            // Draw Player
+            player.draw();
+
+            // Draw and update stars
+            stars.forEach((star, index) => {
+                star.y += star.speed;
+                drawStar(star);
+
+                // Collision detection
+                if (star.y > canvas.height - player.height && star.x > player.x && star.x < player.x + player.width) {
+                    stars.splice(index, 1);
+                    spawnStar();
+                    score++;
+                    createConfetti(5);
+                } else if (star.y > canvas.height) {
+                    stars.splice(index, 1);
+                    spawnStar();
+                }
+            });
+
+            // Draw Score
+            ctx.fillStyle = 'white';
+            ctx.font = '24px Poppins';
+            ctx.textAlign = 'center';
+            ctx.fillText(`Score: ${score}`, canvas.width / 2, 30);
+
+            gameAnimationId = requestAnimationFrame(gameLoop);
+        }
+        
+        function startGame() {
+            if (!gameAnimationId) {
+                initGame();
+                gameLoop();
+                window.addEventListener('resize', initGame);
+                canvas.addEventListener('mousemove', movePlayer);
+                canvas.addEventListener('touchmove', movePlayerTouch);
+            }
+        }
+
+        function stopGame() {
+            if (gameAnimationId) {
+                cancelAnimationFrame(gameAnimationId);
+                gameAnimationId = null;
+                window.removeEventListener('resize', initGame);
+                canvas.removeEventListener('mousemove', movePlayer);
+                canvas.removeEventListener('touchmove', movePlayerTouch);
+            }
+        }
+
+        function movePlayer(e) {
+            const rect = canvas.getBoundingClientRect();
+            player.x = e.clientX - rect.left - player.width / 2;
+        }
+        
+        function movePlayerTouch(e) {
+            e.preventDefault();
+            const rect = canvas.getBoundingClientRect();
+            player.x = e.touches[0].clientX - rect.left - player.width / 2;
+        }
+
+        // Initialize first slide
+        showSlide(0);
+    </script>
+</body>
+</html>
