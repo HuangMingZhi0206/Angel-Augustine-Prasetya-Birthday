@@ -20,8 +20,9 @@
             position: relative;
             width: 100%;
             max-width: 28rem; /* max-w-lg */
-            height: 85vh; /* Adjust as needed */
-            min-height: 600px;
+            /* MODIFICATION: Changed height to be more flexible and removed min-height */
+            height: 80vh; 
+            max-height: 600px; /* Use max-height instead of min-height */
         }
         .slide {
             position: absolute;
@@ -202,7 +203,7 @@
     <div class="confetti-container" id="confetti-container"></div>
     
     <!-- Audio Player -->
-    <audio id="birthdaySong" loop src="Learn Chinese Songs _ Happy Birthday Song 生日快乐 Chinese_Pinyin_English lyrics Easiest Must know song [n4iWaZrRAl8].mp3"></audio>
+    <audio id="birthdaySong" loop src="https://github.com/AnandaRauf/anandarauf.github.io/raw/main/Learn%20Chinese%20Songs%20_%20Happy%20Birthday%20Song%20%E7%94%9F%E6%97%A5%E5%BF%AB%E4%B9%90%20Chinese_Pinyin_English%20lyrics%20Easiest%20Must%20know%20song%20_n4iWaZrRAl8_.mp3"></audio>
 
     <div class="slides-container">
         <!-- Slide 1: Welcome -->
@@ -271,7 +272,7 @@
                  <h2 class="text-2xl font-bold text-gray-800">Star Catcher!</h2>
                  <p class="text-gray-600 mb-2">Catch the falling stars!</p>
                  <div class="flex-grow relative">
-                     <canvas id="gameCanvas" class="absolute top-0 left-0"></canvas>
+                       <canvas id="gameCanvas" class="absolute top-0 left-0"></canvas>
                  </div>
             </div>
         </div>
@@ -356,7 +357,7 @@
              showSlide(1);
              // Automatically play music on start if it's paused
              if (birthdaySong.paused) {
-                 toggleMusic();
+                  toggleMusic();
              }
         });
         nextBtn.addEventListener('click', () => {
@@ -440,7 +441,11 @@
 
         // --- Mouse Follower Particles ---
         document.addEventListener('mousemove', (e) => createParticle(e.clientX, e.clientY));
-        document.addEventListener('touchmove', (e) => createParticle(e.touches[0].clientX, e.touches[0].clientY));
+        document.addEventListener('touchmove', (e) => {
+            if (e.touches.length > 0) {
+                createParticle(e.touches[0].clientX, e.touches[0].clientY)
+            }
+        });
 
         function createParticle(x, y) {
             const particle = document.createElement('div');
@@ -467,12 +472,13 @@
             item.addEventListener('click', () => {
                 // This logic ensures only one quote is open at a time.
                 // It closes any other open quotes before toggling the current one.
+                const wasShowing = item.classList.contains('show-quote');
                 photoItems.forEach(otherItem => {
-                    if (otherItem !== item) {
-                        otherItem.classList.remove('show-quote');
-                    }
+                    otherItem.classList.remove('show-quote');
                 });
-                item.classList.toggle('show-quote');
+                if (!wasShowing) {
+                    item.classList.add('show-quote');
+                }
             });
         });
 
@@ -486,8 +492,10 @@
         
         function resizeCanvas() {
             const container = canvas.parentElement;
-            canvas.width = container.clientWidth;
-            canvas.height = container.clientHeight;
+            if (container) {
+                canvas.width = container.clientWidth;
+                canvas.height = container.clientHeight;
+            }
         }
 
         function initGame() {
@@ -499,19 +507,21 @@
                 height: 30,
                 draw() {
                     ctx.beginPath();
-                    ctx.moveTo(this.x, canvas.height);
-                    ctx.lineTo(this.x + this.width / 2, canvas.height - this.height);
-                    ctx.lineTo(this.x + this.width, canvas.height);
+                    // A simple basket shape
+                    ctx.moveTo(this.x, canvas.height - this.height);
+                    ctx.lineTo(this.x + this.width, canvas.height - this.height);
+                    ctx.lineTo(this.x + this.width - 10, canvas.height);
+                    ctx.lineTo(this.x + 10, canvas.height);
                     ctx.closePath();
-                    ctx.fillStyle = '#fde68a';
+                    ctx.fillStyle = '#a78bfa'; // Purple basket
                     ctx.fill();
-                    ctx.strokeStyle = '#facc15';
+                    ctx.strokeStyle = '#8b5cf6';
                     ctx.lineWidth = 2;
                     ctx.stroke();
                 }
             };
             stars = [];
-            for(let i=0; i<5; i++) {
+            for(let i=0; i<15; i++) { // More stars for more fun
                 spawnStar();
             }
         }
@@ -520,7 +530,7 @@
             const size = Math.random() * 10 + 5;
             stars.push({
                 x: Math.random() * canvas.width,
-                y: -size,
+                y: Math.random() * -canvas.height, // Stagger their start
                 size: size,
                 speed: Math.random() * 2 + 1
             });
@@ -548,6 +558,7 @@
         }
 
         function gameLoop() {
+            if (!canvas) return;
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             
             // Draw Player
@@ -559,11 +570,11 @@
                 drawStar(star);
 
                 // Collision detection
-                if (star.y > canvas.height - player.height && star.x > player.x && star.x < player.x + player.width) {
+                if (star.y > canvas.height - player.height && star.y < canvas.height && star.x > player.x && star.x < player.x + player.width) {
                     stars.splice(index, 1);
                     spawnStar();
                     score++;
-                    createConfetti(5);
+                    createConfetti(5); // A little celebration
                 } else if (star.y > canvas.height) {
                     stars.splice(index, 1);
                     spawnStar();
@@ -571,16 +582,18 @@
             });
 
             // Draw Score
-            ctx.fillStyle = 'white';
-            ctx.font = '24px Poppins';
-            ctx.textAlign = 'center';
-            ctx.fillText(`Score: ${score}`, canvas.width / 2, 30);
+            ctx.fillStyle = '#333';
+            ctx.font = '20px Poppins';
+            ctx.textAlign = 'left';
+            ctx.fillText(`Score: ${score}`, 15, 30);
 
             gameAnimationId = requestAnimationFrame(gameLoop);
         }
         
+        let isGameRunning = false;
         function startGame() {
-            if (!gameAnimationId) {
+            if (!isGameRunning) {
+                isGameRunning = true;
                 initGame();
                 gameLoop();
                 window.addEventListener('resize', initGame);
@@ -590,9 +603,9 @@
         }
 
         function stopGame() {
-            if (gameAnimationId) {
+            if (isGameRunning) {
                 cancelAnimationFrame(gameAnimationId);
-                gameAnimationId = null;
+                isGameRunning = false;
                 window.removeEventListener('resize', initGame);
                 canvas.removeEventListener('mousemove', movePlayer);
                 canvas.removeEventListener('touchmove', movePlayerTouch);
@@ -607,7 +620,9 @@
         function movePlayerTouch(e) {
             e.preventDefault();
             const rect = canvas.getBoundingClientRect();
-            player.x = e.touches[0].clientX - rect.left - player.width / 2;
+            if (e.touches.length > 0) {
+                player.x = e.touches[0].clientX - rect.left - player.width / 2;
+            }
         }
 
         // Initialize first slide
